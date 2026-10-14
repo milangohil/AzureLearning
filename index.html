@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Azure Learning Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: progress band on top, area rail on the left, topic workspace on the right; the rail stacks above on phones */
+:root {
+  --bg: #f3f6f8;
+  --surface: #ffffff;
+  --sunken: #ebf1f5;
+  --ink: #13202a;
+  --ink-2: #465765;
+  --muted: #687886;
+  --line: #d9e1e7;
+  --accent: #0b66b2;
+  --accent-ink: #ffffff;
+  --accent-soft: #e2eef8;
+  --good: #1d7a4c;
+  --good-soft: #e1f2e9;
+  --f-display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --r: 10px;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d141a; --surface: #141e26; --sunken: #0f181f; --ink: #e4ebf0; --ink-2: #a6b4bf;
+    --muted: #84929e; --line: #26343f; --accent: #5ba8e5; --accent-ink: #06131d; --accent-soft: #16304a;
+    --good: #4cc38a; --good-soft: #123326; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d141a; --surface: #141e26; --sunken: #0f181f; --ink: #e4ebf0; --ink-2: #a6b4bf;
+  --muted: #84929e; --line: #26343f; --accent: #5ba8e5; --accent-ink: #06131d; --accent-soft: #16304a;
+  --good: #4cc38a; --good-soft: #123326; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body); }
+button, input { font: inherit; color: inherit; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.wrap {
+  max-width: 1180px; margin: 0 auto; display: grid; gap: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+
+/* Header */
+.top { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
+.eyebrow { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.1 var(--f-display); letter-spacing: -.015em; margin: 8px 0 8px; text-wrap: balance; }
+h2 { font: 600 21px/1.25 var(--f-display); margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--ink-2); max-width: 64ch; }
+.btn-quiet {
+  background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px;
+  font-size: 13px; color: var(--ink-2); cursor: pointer;
+}
+.btn-quiet:hover { border-color: var(--muted); color: var(--ink); }
+.btn-quiet[data-armed="true"] { border-color: var(--accent); color: var(--accent); }
+
+/* Summary band */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.label { font: 500 11.5px/1.2 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.big { font: 600 30px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.big small { font: 500 15px var(--f-body); color: var(--muted); }
+.sub { font-size: 13px; color: var(--ink-2); }
+.meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.meter > i { display: block; height: 100%; border-radius: 3px; background: var(--accent); transition: width .3s ease; }
+.meter.full > i { background: var(--good); }
+
+.next {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+  background: var(--accent-soft); border-radius: var(--r); padding: 12px 16px;
+}
+.next .label { color: var(--accent); }
+.next strong { font-weight: 600; }
+.next .in { color: var(--ink-2); font-size: 14px; }
+.btn {
+  margin-left: auto; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px;
+  padding: 7px 14px; font-weight: 600; font-size: 14px; cursor: pointer;
+}
+.btn:hover { filter: brightness(1.08); }
+
+/* Main layout */
+.layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: grid; gap: 8px; }
+@media (max-width: 860px) { .rail { position: static; } }
+.rail-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px; }
+.areas { display: grid; gap: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 6px; }
+@media (max-width: 860px) { .areas { grid-template-columns: repeat(2, minmax(0, 1fr)); } .area-btn .nm { white-space: normal; } }
+.area-btn {
+  display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 4px 8px; align-items: baseline;
+  text-align: left; background: transparent; border: 0; border-radius: 7px; padding: 10px 10px; cursor: pointer;
+}
+.area-btn:hover { background: var(--sunken); }
+.area-btn[aria-current="true"] { background: var(--accent-soft); }
+.area-btn .n { font: 500 12px var(--f-mono); color: var(--muted); }
+.area-btn[aria-current="true"] .n { color: var(--accent); }
+.area-btn .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.area-btn .ct { font: 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.area-btn .meter { grid-column: 2 / 4; height: 4px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px 20px 8px; min-width: 0; }
+.panel-head { display: grid; gap: 10px; padding-bottom: 16px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 12px/1 var(--f-mono); padding: 5px 8px; border-radius: 999px; background: var(--sunken); color: var(--ink-2); }
+.chip.good { background: var(--good-soft); color: var(--good); display: inline-flex; gap: 4px; align-items: center; }
+.chip.area { background: var(--accent-soft); color: var(--accent); }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.seg { display: inline-flex; background: var(--sunken); border-radius: 8px; padding: 3px; }
+.seg button { background: transparent; border: 0; border-radius: 6px; padding: 5px 12px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 0 0 1px var(--line); }
+.search { flex: 1 1 200px; min-width: 0; }
+.search input {
+  width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; font-size: 14px;
+}
+.search input::placeholder { color: var(--muted); }
+
+/* Topics */
+.topic { border-top: 1px solid var(--line); }
+.row { display: flex; gap: 12px; align-items: flex-start; padding: 13px 0; }
+.row input[type="checkbox"] { width: 19px; height: 19px; margin: 2px 0 0; accent-color: var(--good); cursor: pointer; flex: none; }
+.toggle {
+  flex: 1; min-width: 0; display: flex; gap: 12px; align-items: baseline; justify-content: space-between;
+  background: none; border: 0; padding: 0; text-align: left; cursor: pointer;
+}
+.t-title { font-weight: 600; }
+.topic.is-done .t-title { color: var(--muted); }
+.t-meta { display: inline-flex; gap: 8px; align-items: center; font: 12px var(--f-mono); color: var(--muted); white-space: nowrap; }
+.chev { width: 14px; height: 14px; transition: transform .2s ease; }
+.toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.body { display: grid; gap: 14px; padding: 0 0 20px 31px; max-width: 76ch; }
+.body p { margin: 0; }
+.example { background: var(--sunken); border-radius: 8px; padding: 12px 14px; display: grid; gap: 4px; }
+.facts { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.facts li { position: relative; padding-left: 16px; color: var(--ink-2); }
+.facts li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 6px; height: 6px; border-radius: 1px; background: var(--accent); }
+.steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; color: var(--ink-2); }
+.code { position: relative; background: var(--sunken); border: 1px solid var(--line); border-radius: 8px; min-width: 0; }
+.code pre { margin: 0; padding: 12px 14px; padding-right: 70px; overflow-x: auto; font: 13px/1.6 var(--f-mono); }
+.copy { position: absolute; top: 6px; right: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 3px 9px; font-size: 12px; cursor: pointer; }
+.learn { font-weight: 500; text-decoration: none; display: inline-flex; gap: 4px; align-items: center; }
+.learn:hover { text-decoration: underline; }
+.empty { padding: 28px 0 32px; color: var(--ink-2); border-top: 1px solid var(--line); }
+
+/* Exam map */
+.exam { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; display: grid; gap: 16px; }
+.exam-grid { display: grid; gap: 14px; }
+.exam-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 6px 20px; align-items: center; }
+@media (max-width: 640px) { .exam-row { grid-template-columns: minmax(0, 1fr); } }
+.exam-row .d { font-weight: 600; }
+.exam-row .covers { font-size: 13px; color: var(--ink-2); }
+.range { position: relative; height: 22px; }
+.range .track { position: absolute; inset: 9px 0; background: var(--line); border-radius: 2px; }
+.range .tick { position: absolute; top: 4px; bottom: 4px; width: 1px; background: var(--line); }
+.range .bar { position: absolute; top: 5px; height: 12px; border-radius: 4px; background: var(--accent); cursor: default; }
+.range .val { position: absolute; top: 0; font: 500 12px/22px var(--f-mono); color: var(--ink); font-variant-numeric: tabular-nums; padding-left: 8px; }
+.axis { display: flex; justify-content: space-between; font: 11px var(--f-mono); color: var(--muted); }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Step 1 &middot; AZ-900 foundations</div>
+      <h1>Azure Learning Tracker</h1>
+      <p class="lede">Six study areas, each broken into topics with a plain explanation, a real-life example and the facts that come up in the exam. Tick a topic when you can explain it to a friend.</p>
+    </div>
+    <button class="btn-quiet" id="reset" type="button">Reset progress</button>
+  </header>
+
+  <section class="stats" id="stats" aria-label="Progress summary"></section>
+  <div class="next" id="next"></div>
+
+  <div class="layout">
+    <aside class="rail">
+      <div class="rail-head"><span class="label">Study areas, in order</span></div>
+      <nav class="areas" id="areas" aria-label="Study areas"></nav>
+    </aside>
+
+    <main class="panel">
+      <div class="panel-head" id="area-head"></div>
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Show topics">
+          <button type="button" data-filter="all" aria-pressed="true">All</button>
+          <button type="button" data-filter="todo" aria-pressed="false">To do</button>
+          <button type="button" data-filter="done" aria-pressed="false">Done</button>
+        </div>
+        <label class="search"><span class="sr">Search all topics</span>
+          <input id="q" type="search" placeholder="Search all topics, e.g. subnet, SLA, tiers" autocomplete="off">
+        </label>
+      </div>
+      <div id="list"></div>
+    </main>
+  </div>
+
+  <section class="exam" aria-labelledby="exam-h">
+    <div style="display:grid;gap:6px">
+      <h2 id="exam-h">How this maps to the AZ-900 exam</h2>
+      <p class="note">Share of exam questions per skill area, from Microsoft's study guide. Weights change from time to time, so check the <a href="https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/az-900" target="_blank" rel="noopener">official AZ-900 study guide</a> before you book.</p>
+    </div>
+    <div class="exam-grid" id="exam"></div>
+  </section>
+</div>
+
+<script>
+const AREAS = [
+  {
+    id: "fundamentals", n: "1", name: "Fundamentals", exam: ["Cloud concepts", "Management & governance"],
+    blurb: "How the cloud works and how Azure is organised. Start here: every other area builds on these ideas.",
+    items: [
+      { id: "f1", title: "Cloud models: public, private and hybrid", hrs: 1,
+        what: "Public cloud means renting shared servers from a provider like Azure. Private cloud is cloud-style infrastructure used by one organisation only. Hybrid mixes both and connects them.",
+        example: "A bank keeps customer records in its own datacenter (private) but runs its public website on Azure (public). Together, that is hybrid.",
+        facts: ["Multi-cloud means using more than one provider, for example Azure and AWS.", "Azure Arc lets you manage servers outside Azure as if they were inside it.", "Azure VMware Solution runs existing VMware workloads in Azure."],
+        link: ["Describe cloud concepts (Microsoft Learn path)", "https://learn.microsoft.com/en-us/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/"] },
+      { id: "f2", title: "IaaS, PaaS and SaaS", hrs: 1,
+        what: "These describe how much Azure manages for you. IaaS: you rent a virtual machine and manage the operating system. PaaS: you bring your code and Azure runs the platform. SaaS: you simply use finished software.",
+        example: "Think pizza. IaaS is buying ingredients and baking at home, PaaS is takeaway, SaaS is eating at the restaurant. Azure VMs are IaaS, App Service is PaaS, Microsoft 365 is SaaS.",
+        facts: ["Shared responsibility: you are always responsible for your data, devices, accounts and identities.", "Microsoft is always responsible for the physical datacenter, network and hosts.", "Serverless (Azure Functions) is a kind of PaaS where you never see a server."],
+        link: ["Shared responsibility in the cloud", "https://learn.microsoft.com/en-us/azure/security/fundamentals/shared-responsibility"] },
+      { id: "f3", title: "Regions and availability zones", hrs: 1,
+        what: "A region is a group of datacenters in one area, such as East US or UK South. Availability zones are separate datacenters inside a region, each with its own power, cooling and network.",
+        example: "If a storm knocks out one datacenter in UK South, an app spread across three zones keeps running from the other two.",
+        facts: ["Regions that support zones have at least three of them.", "Many regions are paired with another region in the same geography for disaster recovery.", "Sovereign regions such as Azure Government are kept separate for legal and compliance reasons."],
+        link: ["What are availability zones?", "https://learn.microsoft.com/en-us/azure/reliability/availability-zones-overview"] },
+      { id: "f4", title: "How Azure is organised", hrs: 1,
+        what: "Azure nests containers inside each other: management groups hold subscriptions, subscriptions hold resource groups, and resource groups hold resources such as VMs and databases.",
+        example: "A company creates one subscription for Production and one for Testing, then a resource group per app, such as rg-shop-web. Deleting rg-shop-web removes everything in it.",
+        facts: ["Settings applied higher up (policies, permissions) flow down to everything below.", "Each resource sits in exactly one resource group, and resource groups cannot be nested.", "A subscription is a billing boundary: each one gets its own bill."],
+        link: ["Management groups overview", "https://learn.microsoft.com/en-us/azure/governance/management-groups/overview"] },
+      { id: "f5", title: "Pricing and cost control", hrs: 1.5,
+        what: "Azure is pay-as-you-go: you pay for what you use as an operating expense (OpEx) instead of buying hardware up front (CapEx). Several tools help you estimate and cap the bill.",
+        example: "Before launching a website you use the Pricing Calculator and see it will cost about $30 a month, then set a $40 budget alert so any surprise spike reaches your inbox.",
+        facts: ["Pricing Calculator estimates new costs; the TCO Calculator compares running on-premises with Azure.", "Reservations (1 or 3 years) can cut VM costs by up to 72% compared with pay-as-you-go.", "Spot VMs use spare capacity at up to 90% off, but Azure can take them back at short notice.", "Tags such as env=prod or owner=milan let you split the bill by team or project."],
+        link: ["Azure Pricing Calculator", "https://azure.microsoft.com/en-us/pricing/calculator/"] },
+      { id: "f6", title: "Governance: Policy, locks and tags", hrs: 1,
+        what: "Governance means rules that keep your environment tidy and safe. Azure Policy blocks or flags resources that break your rules. Resource locks stop accidental deletes or changes.",
+        example: "You assign the 'Allowed locations' policy so nobody can create resources outside Europe, and put a delete lock on the production database.",
+        facts: ["Two lock types: CanNotDelete and ReadOnly. Locks apply even to Owners.", "Policy can deny, audit, or automatically fix (remediate) resources.", "Microsoft Purview helps you find, classify and govern data across your estate."],
+        link: ["What is Azure Policy?", "https://learn.microsoft.com/en-us/azure/governance/policy/overview"] },
+      { id: "f7", title: "Tools: Portal, CLI, PowerShell and Bicep", hrs: 1.5,
+        what: "Every action in Azure goes through Azure Resource Manager (ARM), whichever tool you use. The Portal is the website; the CLI and PowerShell are for scripts; Bicep and ARM templates describe infrastructure as code.",
+        example: "You click through the Portal to learn a service once, then write a Bicep file so you can rebuild the same setup in another region with one command.",
+        facts: ["Cloud Shell gives you a terminal in the browser with the CLI and PowerShell already installed.", "Infrastructure as code is repeatable: the same file gives the same result every time.", "ARM templates are JSON; Bicep is a simpler language that turns into ARM templates."],
+        link: ["What is Azure Resource Manager?", "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/overview"] },
+      { id: "f8", title: "SLAs and reliability", hrs: 0.5,
+        what: "A Service Level Agreement (SLA) is Microsoft's uptime promise for a service, with service credits if they miss it. More copies and more zones earn a higher SLA.",
+        example: "99.9% uptime allows about 43 minutes of downtime a month; 99.99% allows about 4. That gap decides whether your app needs availability zones.",
+        facts: ["One VM with Premium SSD disks: 99.9%. Two or more VMs across availability zones: 99.99%.", "Free tiers usually come with no SLA.", "Chaining services lowers the total: multiply their SLAs together (a composite SLA)."],
+        link: ["Service Level Agreements", "https://www.microsoft.com/licensing/docs/view/Service-Level-Agreements-SLA-for-Online-Services"] }
+    ]
+  },
+  {
+    id: "compute", n: "2", name: "Compute", exam: ["Architecture & services"],
+    blurb: "Where your code actually runs, from full virtual machines you manage to serverless functions you never see.",
+    items: [
+      { id: "c1", title: "Virtual Machines", hrs: 2,
+        what: "A virtual machine (VM) is a computer you rent in Azure. You pick the size, operating system and disks, and you manage everything from the OS upwards (IaaS).",
+        example: "A company has an old accounting app that only runs on Windows Server 2019. They move it as-is to an Azure VM instead of rewriting it.",
+        facts: ["Size families: B (burstable, cheap), D (general purpose), E (extra memory), F (extra CPU), N (GPU).", "Use 'Stop (deallocate)' to stop compute charges. You still pay for the disks.", "Availability sets spread VMs across up to 3 fault domains and 20 update domains."],
+        link: ["Virtual machines overview", "https://learn.microsoft.com/en-us/azure/virtual-machines/overview"] },
+      { id: "c2", title: "Virtual Machine Scale Sets", hrs: 1,
+        what: "A scale set is a group of identical VMs that grows or shrinks automatically, based on load or a schedule.",
+        example: "An online shop runs 2 VMs normally, grows to 10 on Black Friday when CPU passes 70%, then shrinks back overnight.",
+        facts: ["Scale rules can use metrics (CPU, queue length) or a fixed schedule.", "Usually paired with a load balancer that spreads traffic across the VMs.", "You only pay for the VMs running at each moment."],
+        link: ["What are Virtual Machine Scale Sets?", "https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview"] },
+      { id: "c3", title: "App Service", hrs: 1.5,
+        what: "App Service hosts websites and APIs without you managing servers (PaaS). You deploy your code; Azure handles the operating system, patching and scaling.",
+        example: "A student deploys a Node.js portfolio site from GitHub to App Service on the Free tier and gets an https://<name>.azurewebsites.net address.",
+        facts: ["Runs .NET, Node.js, Python, Java, PHP, or your own container.", "Tiers: Free, Shared, Basic, Standard, Premium, Isolated. Deployment slots start at Standard.", "Deployment slots let you test a new version, then swap it into production with no downtime."],
+        link: ["App Service overview", "https://learn.microsoft.com/en-us/azure/app-service/overview"] },
+      { id: "c4", title: "Azure Functions", hrs: 1.5,
+        what: "Functions run small pieces of code when something happens: a file upload, a timer, an HTTP call. There are no servers to manage (serverless).",
+        example: "Every time a photo lands in a storage container, a function makes a thumbnail. When no photos arrive, it costs nothing.",
+        facts: ["Triggers start a function; bindings connect it to other services without extra code.", "The Consumption plan includes a free grant of 1 million executions a month.", "Consumption plan runs time out after 5 minutes by default (10 at most). Premium and Flex Consumption plans allow longer runs."],
+        link: ["Azure Functions overview", "https://learn.microsoft.com/en-us/azure/azure-functions/functions-overview"] },
+      { id: "c5", title: "Containers: ACI, Container Apps and AKS", hrs: 2,
+        what: "A container packages an app with everything it needs, so it runs the same anywhere. Azure has three main places to run them, from simplest to most control.",
+        example: "A team packages their API as a Docker image. A quick test runs in Container Instances, production runs in Container Apps, and a platform team running 200 microservices uses AKS.",
+        facts: ["Container Instances (ACI): start one container fast, pay per second, no orchestration.", "Container Apps: serverless containers that autoscale, even down to zero.", "AKS (Kubernetes): full control. On the Free tier the control plane costs nothing; you pay for the nodes.", "Store your images in Azure Container Registry (ACR)."],
+        link: ["Compare Azure container options", "https://learn.microsoft.com/en-us/azure/container-apps/compare-options"] },
+      { id: "c6", title: "Azure Virtual Desktop", hrs: 0.5,
+        what: "Azure Virtual Desktop streams a Windows desktop and apps from Azure to any device.",
+        example: "A call centre gives 300 temporary staff a secure Windows desktop they open in a browser on their own laptops, with no company data stored on those laptops.",
+        facts: ["Supports Windows 11 multi-session, so many users share one VM.", "Users sign in with Microsoft Entra ID.", "A good fit for contractors, remote work and bring-your-own-device setups."],
+        link: ["What is Azure Virtual Desktop?", "https://learn.microsoft.com/en-us/azure/virtual-desktop/overview"] }
+    ]
+  },
+  {
+    id: "networking", n: "3", name: "Networking", exam: ["Architecture & services"],
+    blurb: "How your resources talk to each other, to your office and to the internet, and how you keep the wrong traffic out.",
+    items: [
+      { id: "n1", title: "Virtual Networks and subnets", hrs: 1.5,
+        what: "A Virtual Network (VNet) is your private network in Azure. You give it an IP address range and split it into subnets so resources can talk to each other privately.",
+        example: "You create VNet 10.0.0.0/16 with a 'web' subnet 10.0.1.0/24 for web servers and a 'data' subnet 10.0.2.0/24 for the database.",
+        facts: ["Azure reserves 5 IP addresses in every subnet, so a /24 gives you 251 usable addresses, not 256.", "A VNet lives in one region and one subscription.", "Choose ranges that don't overlap your office network or other VNets, or you can't connect them later."],
+        link: ["What is Azure Virtual Network?", "https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview"] },
+      { id: "n2", title: "Network Security Groups (NSGs)", hrs: 1,
+        what: "An NSG is a list of allow and deny rules for traffic going in and out of a subnet or a VM's network card. It works like a basic firewall.",
+        example: "You allow port 443 (HTTPS) from anywhere into the web subnet, and allow port 1433 (SQL) into the data subnet only from the web subnet.",
+        facts: ["Each rule has a priority from 100 to 4096. Lower numbers are checked first, and the first match wins.", "Default rules allow traffic inside the VNet and deny all other inbound traffic from the internet.", "Rules match on source, destination, port and protocol."],
+        link: ["Network security groups", "https://learn.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview"] },
+      { id: "n3", title: "Connecting networks: peering, VPN and ExpressRoute", hrs: 1.5,
+        what: "Peering joins two Azure VNets. A VPN Gateway links Azure to your office through an encrypted tunnel over the internet. ExpressRoute is a private connection that skips the public internet.",
+        example: "A retailer peers its 'shop' and 'payments' VNets, uses site-to-site VPN for 20 branch stores, and ExpressRoute from head office for fast, steady traffic.",
+        facts: ["Peering is not transitive: if A peers with B and B with C, A still cannot reach C without its own link.", "Point-to-site VPN connects one laptop; site-to-site connects a whole office.", "ExpressRoute goes through a connectivity provider and gives more reliable, predictable speeds."],
+        link: ["Virtual network peering", "https://learn.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview"] },
+      { id: "n4", title: "Load balancing options", hrs: 1.5,
+        what: "Azure has four main ways to spread traffic. Choose by asking two questions: is it web (HTTP) traffic or not, and is it in one region or worldwide?",
+        example: "A global news site uses Front Door to send readers to the nearest region, and Application Gateway in each region to route /video and /articles to different servers.",
+        facts: ["Load Balancer: any TCP/UDP traffic, mainly within one region (layer 4).", "Application Gateway: web traffic in one region, URL-based routing, optional web application firewall (WAF).", "Front Door: web traffic worldwide, with caching and WAF.", "Traffic Manager: worldwide, DNS-based, any protocol."],
+        link: ["Load-balancing options", "https://learn.microsoft.com/en-us/azure/architecture/guide/technology-choices/load-balancing-overview"] },
+      { id: "n5", title: "Azure DNS", hrs: 0.5,
+        what: "Azure DNS hosts your domain names, turning names like shop.example.com into IP addresses. Private DNS zones do the same job inside your VNets.",
+        example: "You buy example.com from a registrar, point it at Azure DNS, then add a record so www.example.com goes to your App Service.",
+        facts: ["Azure DNS hosts domains; you still buy the domain from a registrar.", "Private DNS zones give VMs friendly names like db.internal without exposing them publicly.", "Common records: A (IPv4), AAAA (IPv6), CNAME (alias), MX (email), TXT (verification)."],
+        link: ["What is Azure DNS?", "https://learn.microsoft.com/en-us/azure/dns/dns-overview"] },
+      { id: "n6", title: "Private Endpoints and Azure Bastion", hrs: 1,
+        what: "A Private Endpoint gives an Azure service, such as a storage account, a private IP inside your VNet, so traffic never crosses the internet. Azure Bastion lets you sign in to VMs from the Portal without giving them public IPs.",
+        example: "Your database gets a private endpoint so only your app's subnet can reach it, and admins use Bastion instead of opening port 3389 to the world.",
+        facts: ["Service endpoints are an older, simpler option: traffic stays on Microsoft's network, but the service keeps its public address.", "Bastion supports RDP and SSH from the browser over TLS.", "Removing public IPs from VMs is one of the quickest security wins."],
+        link: ["What is a private endpoint?", "https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview"] }
+    ]
+  },
+  {
+    id: "storage", n: "4", name: "Storage", exam: ["Architecture & services"],
+    blurb: "Where your files, backups and app data live, how many copies Azure keeps, and how you move data in and out.",
+    items: [
+      { id: "s1", title: "Storage accounts", hrs: 1,
+        what: "A storage account is the container for your Azure storage data. Its name becomes part of the web address for that data, so it must be unique across all of Azure.",
+        example: "You create 'milanphotos2026', and your images become reachable at https://milanphotos2026.blob.core.windows.net.",
+        facts: ["Names: 3 to 24 characters, lowercase letters and numbers only.", "Standard general-purpose v2 fits almost everything. Premium types exist for low-latency blobs, file shares or page blobs.", "One account can hold blobs, files, queues and tables."],
+        link: ["Storage account overview", "https://learn.microsoft.com/en-us/azure/storage/common/storage-account-overview"] },
+      { id: "s2", title: "Blob, Files, Queues and Tables", hrs: 1,
+        what: "Blob storage holds files and objects such as images, backups and videos. Azure Files provides shared network drives. Queues pass messages between apps. Tables store simple structured data without a full database.",
+        example: "A photo app saves uploads in Blob, the office maps a shared drive from Azure Files, a queue tells a worker to resize each photo, and a table counts the likes.",
+        facts: ["Azure Files supports SMB and NFS, so both Windows and Linux machines can mount it.", "Each queue message can be up to 64 KB.", "Managed disks, used by VMs, are a separate kind of storage."],
+        link: ["Introduction to Azure Storage", "https://learn.microsoft.com/en-us/azure/storage/common/storage-introduction"] },
+      { id: "s3", title: "Blob access tiers", hrs: 1,
+        what: "Tiers trade storage price against access price. Data you use often goes in Hot; data you rarely touch goes in cheaper tiers that cost more to read.",
+        example: "A clinic keeps this month's scans in Hot, last year's in Cool, and 10-year legal records in Archive, cutting its storage bill sharply.",
+        facts: ["Hot: frequent access, highest storage cost, lowest cost to read.", "Minimum stay before early-deletion fees: Cool 30 days, Cold 90 days, Archive 180 days.", "Archive data is offline. Bringing it back (rehydration) can take up to 15 hours.", "Lifecycle management rules move blobs between tiers automatically."],
+        link: ["Access tiers for blob data", "https://learn.microsoft.com/en-us/azure/storage/blobs/access-tiers-overview"] },
+      { id: "s4", title: "Redundancy: LRS, ZRS, GRS and GZRS", hrs: 1,
+        what: "Azure always keeps several copies of your data. The option you pick decides where those copies live: one datacenter, several zones, or a second region.",
+        example: "A startup's test data uses LRS, the cheapest option. Its customer data uses GZRS, so it survives both a datacenter fire and a whole-region outage.",
+        facts: ["LRS: 3 copies in one datacenter.", "ZRS: 3 copies spread across 3 availability zones.", "GRS: LRS in the main region plus 3 copies in a second region (6 in total).", "GZRS: ZRS in the main region plus LRS in a second region. Add 'RA-' to read from the second region at any time."],
+        link: ["Azure Storage redundancy", "https://learn.microsoft.com/en-us/azure/storage/common/storage-redundancy"] },
+      { id: "s5", title: "Managed disks", hrs: 0.5,
+        what: "Managed disks are the hard drives attached to VMs. Azure handles the storage behind them; you choose the performance level.",
+        example: "A dev VM uses Standard SSD to save money; a busy SQL Server VM uses Premium SSD v2 for fast, steady performance.",
+        facts: ["From cheapest to fastest: Standard HDD, Standard SSD, Premium SSD, Premium SSD v2, Ultra Disk.", "Snapshots take quick point-in-time backups of a disk.", "Disks are encrypted at rest by default."],
+        link: ["Azure managed disk types", "https://learn.microsoft.com/en-us/azure/virtual-machines/disks-types"] },
+      { id: "s6", title: "Moving data and controlling access", hrs: 1,
+        what: "Tools move data in and out, and access settings decide who can read it. Prefer Entra ID sign-in over sharing account keys.",
+        example: "You use AzCopy to upload 50 GB of backups, then send a partner a SAS link that lets them read one folder for 7 days only.",
+        facts: ["AzCopy is a command-line copy tool, Storage Explorer is a desktop app, and Azure File Sync keeps office file servers in sync with Azure Files.", "Azure Data Box is a physical device shipped to you for moving terabytes offline.", "A shared access signature (SAS) gives limited, time-bound access. Account keys give full access, so guard them."],
+        link: ["Shared access signatures (SAS)", "https://learn.microsoft.com/en-us/azure/storage/common/storage-sas-overview"] }
+    ]
+  },
+  {
+    id: "security", n: "5", name: "Security & identity", exam: ["Architecture & services"],
+    blurb: "Who can sign in, what they are allowed to do, where secrets live, and how Azure spots and blocks attacks.",
+    items: [
+      { id: "x1", title: "Microsoft Entra ID", hrs: 1.5,
+        what: "Entra ID (formerly Azure Active Directory) is Azure's identity service. It stores users and groups and handles sign-in for Azure, Microsoft 365 and thousands of other apps.",
+        example: "A new hire gets one Entra ID account and signs in to Outlook, the Azure Portal and Salesforce with the same login (single sign-on).",
+        facts: ["Multi-factor authentication (MFA) adds a second check, such as a phone prompt. Microsoft says it blocks over 99.9% of account compromise attacks.", "Conditional Access sets rules like 'require MFA when signing in from outside the office'.", "External ID lets partners and customers sign in without becoming employees."],
+        link: ["What is Microsoft Entra ID?", "https://learn.microsoft.com/en-us/entra/fundamentals/whatis"] },
+      { id: "x2", title: "Role-based access control (RBAC)", hrs: 1,
+        what: "RBAC decides what someone can do in Azure. You give a person, group or app a role at a scope, such as a subscription or a resource group.",
+        example: "Developers get Contributor on rg-shop-test so they can build freely, but only Reader on rg-shop-prod so they can look without changing anything.",
+        facts: ["Owner: full access plus granting access. Contributor: full access except granting access. Reader: view only. User Access Administrator: manages access only.", "Roles given at a higher scope are inherited by everything below.", "Follow least privilege: give the smallest role that does the job."],
+        link: ["What is Azure RBAC?", "https://learn.microsoft.com/en-us/azure/role-based-access-control/overview"] },
+      { id: "x3", title: "Zero Trust and defense in depth", hrs: 1,
+        what: "Zero Trust means never trusting a request just because it comes from inside your network: verify every time. Defense in depth means stacking several layers of protection so one failure isn't fatal.",
+        example: "Even on the office Wi-Fi, an employee must pass MFA to open the finance app, and the database behind it is encrypted and reachable from one subnet only.",
+        facts: ["Zero Trust principles: verify explicitly, use least privilege, assume breach.", "Defense-in-depth layers: physical, identity and access, perimeter, network, compute, application, data.", "Microsoft protects the physical layer; you handle most of the rest."],
+        link: ["What is Zero Trust?", "https://learn.microsoft.com/en-us/security/zero-trust/zero-trust-overview"] },
+      { id: "x4", title: "Key Vault and managed identities", hrs: 1.5,
+        what: "Key Vault safely stores secrets such as passwords, API keys and certificates. Managed identities let Azure resources sign in to other services with no password in your code.",
+        example: "Your web app uses its managed identity to read the database password from Key Vault at startup, so no secret ever sits in GitHub.",
+        facts: ["Key Vault stores three things: secrets, keys and certificates.", "A system-assigned identity lives and dies with one resource; a user-assigned identity can be shared by several.", "Never commit secrets to a repository, even a private one."],
+        link: ["About Azure Key Vault", "https://learn.microsoft.com/en-us/azure/key-vault/general/overview"] },
+      { id: "x5", title: "Defender for Cloud and Sentinel", hrs: 1,
+        what: "Microsoft Defender for Cloud checks your setup for weak spots and protects workloads. Microsoft Sentinel collects security logs and alerts across your whole estate (a SIEM).",
+        example: "Defender for Cloud flags a storage account open to the public and lowers your Secure Score; Sentinel spots 50 failed sign-ins from another country and raises an incident.",
+        facts: ["Secure Score shows your security posture as a percentage, with a list of fixes.", "Defender for Cloud also covers AWS, Google Cloud and on-premises machines.", "Sentinel can run automatic responses (playbooks), such as disabling a compromised account."],
+        link: ["What is Defender for Cloud?", "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-cloud-introduction"] },
+      { id: "x6", title: "Azure Firewall and DDoS Protection", hrs: 0.5,
+        what: "Azure Firewall is a managed firewall for whole networks, with more features than NSGs. DDoS Protection absorbs floods of fake traffic meant to knock your app offline.",
+        example: "All outbound traffic from your VNets passes through Azure Firewall, which only allows calls to an approved list of websites.",
+        facts: ["NSGs filter by IP address and port; Azure Firewall adds rules by domain name and threat intelligence.", "Every Azure service gets basic DDoS infrastructure protection at no extra cost.", "DDoS Network Protection adds tuning, alerts and cost protection for your public IPs."],
+        link: ["What is Azure Firewall?", "https://learn.microsoft.com/en-us/azure/firewall/overview"] }
+    ]
+  },
+  {
+    id: "labs", n: "+", name: "Hands-on labs", exam: ["Practice for every area"],
+    blurb: "Short exercises to do alongside the reading. Each one cleans up after itself so you don't pay for forgotten resources. Run the commands in Cloud Shell (Bash).",
+    items: [
+      { id: "l1", lab: "fundamentals", title: "Create a free account and a budget alert", hrs: 0.5, cost: "Free",
+        what: "Set up a safe sandbox before you build anything, so a mistake can never turn into a large bill.",
+        steps: ["Sign up for an Azure free account (it includes starter credit).", "In the Portal, open Cost Management + Billing, then Budgets.", "Create a monthly budget of $10 with alerts at 50%, 80% and 100%.", "Add your email as the alert recipient and save."],
+        link: ["Create and manage budgets", "https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/tutorial-acm-create-budgets"] },
+      { id: "l2", lab: "compute", title: "Deploy, connect to and delete a Linux VM", hrs: 1, cost: "A few cents if deleted the same day",
+        what: "Create the smallest useful VM from the command line, sign in to it, then remove everything.",
+        steps: ["Open Cloud Shell from the top bar of the Portal and choose Bash.", "Create a resource group and a B1s Ubuntu VM.", "Copy publicIpAddress from the output and connect with SSH.", "Run uname -a to confirm you are on the VM, then type exit.", "Delete the resource group so the charges stop."],
+        code: "az group create --name rg-lab-vm --location eastus\naz vm create --resource-group rg-lab-vm --name vm-lab1 \\\n  --image Ubuntu2204 --size Standard_B1s \\\n  --admin-username azureuser --generate-ssh-keys\nssh azureuser@<publicIpAddress>\naz group delete --name rg-lab-vm --yes --no-wait",
+        link: ["Quickstart: Linux VM with the Azure CLI", "https://learn.microsoft.com/en-us/azure/virtual-machines/linux/quick-create-cli"] },
+      { id: "l3", lab: "storage", title: "Host a static website on Blob storage", hrs: 1, cost: "Pennies per month",
+        what: "Publish a small HTML site straight from a storage account, with no web server at all.",
+        steps: ["Create a folder called site with an index.html inside.", "Create a storage account with a unique name (lowercase letters and numbers).", "Turn on static website hosting and upload the folder to the $web container.", "Open the web endpoint the last command prints.", "Delete rg-lab-web when you are done."],
+        code: "az group create --name rg-lab-web --location eastus\naz storage account create --name <uniquename> --resource-group rg-lab-web \\\n  --sku Standard_LRS --kind StorageV2\naz storage blob service-properties update --account-name <uniquename> \\\n  --static-website --index-document index.html\naz storage blob upload-batch --account-name <uniquename> \\\n  --source ./site --destination '$web'\naz storage account show --name <uniquename> \\\n  --query \"primaryEndpoints.web\" --output tsv",
+        link: ["Static website hosting in Azure Storage", "https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website"] },
+      { id: "l4", lab: "networking", title: "Build a VNet with a locked-down subnet", hrs: 1, cost: "Free (VNets and NSGs have no charge)",
+        what: "Create a network, then allow SSH into the web subnet from your own IP address only.",
+        steps: ["Find your public IP by searching 'what is my IP'.", "Create the VNet with a web subnet.", "Create an NSG with one rule allowing port 22 from your IP.", "Attach the NSG to the web subnet.", "In the Portal, open the NSG and read the default rules under the one you added."],
+        code: "az group create --name rg-lab-net --location eastus\naz network vnet create --resource-group rg-lab-net --name vnet-lab \\\n  --address-prefix 10.0.0.0/16 \\\n  --subnet-name web --subnet-prefixes 10.0.1.0/24\naz network nsg create --resource-group rg-lab-net --name nsg-web\naz network nsg rule create --resource-group rg-lab-net --nsg-name nsg-web \\\n  --name allow-ssh-my-ip --priority 100 --direction Inbound --access Allow \\\n  --protocol Tcp --destination-port-ranges 22 \\\n  --source-address-prefixes <your-public-ip>\naz network vnet subnet update --resource-group rg-lab-net \\\n  --vnet-name vnet-lab --name web --network-security-group nsg-web",
+        link: ["Quickstart: create a virtual network with the CLI", "https://learn.microsoft.com/en-us/azure/virtual-network/quick-create-cli"] },
+      { id: "l5", lab: "compute", title: "Deploy a web app to App Service", hrs: 1, cost: "Free on the F1 tier",
+        what: "Push a small Node.js app to App Service with a single command, then update it.",
+        steps: ["Create a small Express app with the generator below.", "Run az webapp up from the app folder on the Free (F1) tier.", "Open https://<uniquename>.azurewebsites.net.", "Change some text, run az webapp up again and refresh.", "Delete the resource group shown in the command output."],
+        code: "mkdir hello-azure && cd hello-azure\nnpx express-generator --no-view && npm install\naz webapp up --name <uniquename> --runtime \"NODE:22-lts\" --sku F1",
+        link: ["Quickstart: Node.js web app", "https://learn.microsoft.com/en-us/azure/app-service/quickstart-nodejs"] },
+      { id: "l6", lab: "security", title: "Store and read a secret in Key Vault", hrs: 0.75, cost: "A few cents",
+        what: "Save a password in Key Vault and read it back, using RBAC to grant yourself access.",
+        steps: ["Create a resource group and a key vault with a unique name.", "Give yourself the Key Vault Secrets Officer role on the vault.", "Wait a minute for the role to apply, then set a secret.", "Read the secret back.", "Delete the resource group. The vault name stays reserved for 90 days unless you purge it."],
+        code: "az group create --name rg-lab-kv --location eastus\naz keyvault create --name kv-<uniquename> --resource-group rg-lab-kv\naz role assignment create --role \"Key Vault Secrets Officer\" \\\n  --assignee $(az ad signed-in-user show --query id -o tsv) \\\n  --scope $(az keyvault show --name kv-<uniquename> --query id -o tsv)\naz keyvault secret set --vault-name kv-<uniquename> \\\n  --name DbPassword --value \"example-only-123\"\naz keyvault secret show --vault-name kv-<uniquename> \\\n  --name DbPassword --query value -o tsv",
+        link: ["Quickstart: Key Vault secrets with the CLI", "https://learn.microsoft.com/en-us/azure/key-vault/secrets/quick-create-cli"] },
+      { id: "l7", lab: "fundamentals", title: "Block regions with Azure Policy", hrs: 0.5, cost: "Free",
+        what: "See governance in action by stopping resources from being created in the wrong place.",
+        steps: ["Create an empty resource group, rg-lab-policy, in East US.", "In the Portal, open Policy, then Assignments, then Assign policy.", "Set the scope to rg-lab-policy and pick the built-in policy 'Allowed locations'.", "Allow East US only, save, and wait a few minutes.", "Try to create a storage account in West Europe inside that group. It should fail with a policy error.", "Delete the assignment and the resource group."],
+        link: ["Assign a policy in the Portal", "https://learn.microsoft.com/en-us/azure/governance/policy/assign-policy-portal"] }
+    ]
+  }
+];
+
+const EXAM = [
+  { d: "Describe cloud concepts", lo: 25, hi: 30, covers: "Fundamentals: cloud models, IaaS/PaaS/SaaS, pricing" },
+  { d: "Describe Azure architecture and services", lo: 35, hi: 40, covers: "Fundamentals (regions, organisation), Compute, Networking, Storage, Security & identity" },
+  { d: "Describe Azure management and governance", lo: 30, hi: 35, covers: "Fundamentals: cost control, governance, tools, SLAs" }
+];
+
+const STORE_KEY = "azure-learning-progress-v1";
+const AREA_KEY = "azure-learning-area-v1";
+const byId = Object.fromEntries(AREAS.map(a => [a.id, a]));
+const ALL = AREAS.flatMap(a => a.items.map(t => ({ ...t, area: a })));
+
+let done = new Set();
+try { const raw = localStorage.getItem(STORE_KEY); if (raw) done = new Set(JSON.parse(raw)); } catch (e) {}
+let storedArea = null;
+try { storedArea = localStorage.getItem(AREA_KEY); } catch (e) {}
+
+const hashArea = location.hash.slice(1);
+const state = {
+  area: byId[hashArea] ? hashArea : (byId[storedArea] ? storedArea : "fundamentals"),
+  filter: "all",
+  q: "",
+  open: new Set()
+};
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtH = h => (Math.round(h * 10) / 10).toString().replace(/\.0$/, "");
+const $ = id => document.getElementById(id);
+const CHEV = '<svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const TICK = '<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const OUT = '<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3L4 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify([...done])); } catch (e) {} }
+function areaProgress(a) { const d = a.items.filter(t => done.has(t.id)).length; return { d, n: a.items.length, pct: a.items.length ? d / a.items.length : 0 }; }
+function meter(pct, extra = "") { return `<div class="meter${pct >= 1 ? " full" : ""} ${extra}" role="presentation"><i style="width:${(pct * 100).toFixed(1)}%"></i></div>`; }
+function nextItem() {
+  return ALL.find(t => !t.lab && !done.has(t.id)) || ALL.find(t => !done.has(t.id)) || null;
+}
+
+function renderStats() {
+  const topics = ALL.filter(t => !t.lab), labs = ALL.filter(t => t.lab);
+  const dTop = topics.filter(t => done.has(t.id)).length, dLab = labs.filter(t => done.has(t.id)).length;
+  const pct = ALL.filter(t => done.has(t.id)).length / ALL.length;
+  const left = ALL.filter(t => !done.has(t.id)).reduce((s, t) => s + t.hrs, 0);
+  const total = ALL.reduce((s, t) => s + t.hrs, 0);
+  const areasDone = AREAS.filter(a => areaProgress(a).pct >= 1).length;
+  $("stats").innerHTML = `
+    <div class="tile"><span class="label">Overall</span><span class="big">${Math.round(pct * 100)}<small>%</small></span>${meter(pct)}<span class="sub">${areasDone} of ${AREAS.length} areas complete</span></div>
+    <div class="tile"><span class="label">Topics learned</span><span class="big">${dTop}<small> / ${topics.length}</small></span><span class="sub">Across 5 study areas</span></div>
+    <div class="tile"><span class="label">Labs finished</span><span class="big">${dLab}<small> / ${labs.length}</small></span><span class="sub">Hands-on practice</span></div>
+    <div class="tile"><span class="label">Study time left</span><span class="big">~${Math.round(left)}<small> h</small></span><span class="sub">Of ~${Math.round(total)} h in total (estimate)</span></div>`;
+  const nx = nextItem();
+  $("next").innerHTML = nx
+    ? `<span class="label">Next up</span><span><strong>${esc(nx.title)}</strong> <span class="in">in ${esc(nx.area.name)} &middot; ~${fmtH(nx.hrs)} h</span></span><button class="btn" type="button" data-goto="${nx.id}">Open topic</button>`
+    : `<span class="label">All done</span><span><strong>You have covered every topic and lab in Step 1.</strong> <span class="in">Try the free practice assessment next.</span></span><a class="btn" style="text-decoration:none" href="https://learn.microsoft.com/en-us/credentials/certifications/azure-fundamentals/" target="_blank" rel="noopener">AZ-900 page</a>`;
+}
+
+function renderAreas() {
+  $("areas").innerHTML = AREAS.map(a => {
+    const p = areaProgress(a);
+    return `<button class="area-btn" type="button" data-area="${a.id}" aria-current="${a.id === state.area}">
+      <span class="n">${a.n}</span><span class="nm">${esc(a.name)}</span><span class="ct">${p.d}/${p.n}</span>${meter(p.pct)}</button>`;
+  }).join("");
+}
+
+function renderHead() {
+  const a = byId[state.area], p = areaProgress(a);
+  const hrs = a.items.reduce((s, t) => s + t.hrs, 0);
+  $("area-head").innerHTML = `
+    <div class="label">${a.id === "labs" ? "Practice" : "Area " + a.n + " of 5"}</div>
+    <h2>${esc(a.name)}</h2>
+    <p class="lede">${esc(a.blurb)}</p>
+    <div class="chips">
+      ${a.exam.map(e => `<span class="chip">Exam: ${esc(e)}</span>`).join("")}
+      <span class="chip">${a.items.length} ${a.id === "labs" ? "labs" : "topics"} &middot; ~${fmtH(hrs)} h</span>
+      ${p.pct >= 1 ? `<span class="chip good">${TICK} Complete</span>` : `<span class="chip">${p.d} of ${p.n} done</span>`}
+    </div>
+    ${meter(p.pct)}`;
+}
+
+function itemHTML(t, showArea) {
+  const isOpen = state.open.has(t.id), isDone = done.has(t.id);
+  let body = `<p>${esc(t.what)}</p>`;
+  if (t.example) body += `<div class="example"><span class="label">Real-life example</span><span>${esc(t.example)}</span></div>`;
+  if (t.facts) body += `<div style="display:grid;gap:8px"><span class="label">Key facts</span><ul class="facts">${t.facts.map(f => `<li>${esc(f)}</li>`).join("")}</ul></div>`;
+  if (t.steps) body += `<div style="display:grid;gap:8px"><span class="label">Steps</span><ol class="steps">${t.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol></div>`;
+  if (t.code) body += `<div class="code"><pre id="code-${t.id}"><code>${esc(t.code)}</code></pre><button class="copy" type="button" data-copy="${t.id}">Copy</button></div>`;
+  if (t.cost) body += `<div class="chips"><span class="chip">Cost: ${esc(t.cost)}</span><span class="chip area">Area: ${esc(byId[t.lab].name)}</span></div>`;
+  body += `<a class="learn" href="${t.link[1]}" target="_blank" rel="noopener">${esc(t.link[0])} ${OUT}</a>`;
+  return `<article class="topic${isDone ? " is-done" : ""}">
+    <div class="row">
+      <input type="checkbox" id="chk-${t.id}" data-done="${t.id}" ${isDone ? "checked" : ""} aria-label="Mark '${esc(t.title)}' as done">
+      <button class="toggle" type="button" id="tg-${t.id}" data-toggle="${t.id}" aria-expanded="${isOpen}" aria-controls="body-${t.id}">
+        <span class="t-title">${esc(t.title)}${showArea ? ` <span class="chip area" style="margin-left:6px">${esc(t.area.name)}</span>` : ""}</span>
+        <span class="t-meta">${isDone ? `<span class="chip good">${TICK} Done</span>` : ""}~${fmtH(t.hrs)} h ${CHEV}</span>
+      </button>
+    </div>
+    <div class="body" id="body-${t.id}" ${isOpen ? "" : "hidden"}>${body}</div>
+  </article>`;
+}
+
+function renderList() {
+  const q = state.q.trim().toLowerCase();
+  let items = q
+    ? ALL.filter(t => [t.title, t.what, t.example, ...(t.facts || []), ...(t.steps || [])].join(" ").toLowerCase().includes(q))
+    : byId[state.area].items.map(t => ({ ...t, area: byId[state.area] }));
+  if (state.filter === "todo") items = items.filter(t => !done.has(t.id));
+  if (state.filter === "done") items = items.filter(t => done.has(t.id));
+  if (!items.length) {
+    const msg = q ? `No topics match "${esc(state.q)}". Try a shorter word, such as "zone" or "vault".`
+      : state.filter === "done" ? "Nothing ticked off here yet. Open a topic, read it, then tick the box when you can explain it in your own words."
+      : "Everything in this area is done. Pick another area on the left.";
+    $("list").innerHTML = `<div class="empty">${msg}</div>`;
+    return;
+  }
+  $("list").innerHTML = items.map(t => itemHTML(t, !!q)).join("");
+}
+
+function openDefault() {
+  const items = byId[state.area].items;
+  if (!items.some(t => state.open.has(t.id))) {
+    const first = items.find(t => !done.has(t.id)) || items[0];
+    state.open.add(first.id);
+  }
+}
+
+function renderAll() {
+  const focusId = document.activeElement && document.activeElement.id;
+  renderStats(); renderAreas(); renderHead(); renderList();
+  document.querySelectorAll("[data-filter]").forEach(b => b.setAttribute("aria-pressed", b.dataset.filter === state.filter));
+  if (focusId && $(focusId)) $(focusId).focus({ preventScroll: true });
+}
+
+function setArea(id, scroll) {
+  state.area = id; state.q = ""; $("q").value = "";
+  try { localStorage.setItem(AREA_KEY, id); } catch (e) {}
+  try { history.replaceState(null, "", "#" + id); } catch (e) {}
+  openDefault(); renderAll();
+  if (scroll && window.matchMedia("(max-width: 860px)").matches) document.querySelector(".panel").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-area],[data-toggle],[data-filter],[data-copy],[data-goto],#reset");
+  if (!el) return;
+  if (el.dataset.area) return setArea(el.dataset.area, true);
+  if (el.dataset.filter) { state.filter = el.dataset.filter; return renderAll(); }
+  if (el.dataset.toggle) {
+    const id = el.dataset.toggle, open = !state.open.has(id);
+    open ? state.open.add(id) : state.open.delete(id);
+    el.setAttribute("aria-expanded", open);
+    $("body-" + id).hidden = !open;
+    return;
+  }
+  if (el.dataset.goto) {
+    const t = ALL.find(x => x.id === el.dataset.goto);
+    state.open.add(t.id); state.filter = "all"; setArea(t.area.id, false);
+    const tg = $("tg-" + t.id);
+    if (tg) { tg.scrollIntoView({ behavior: "smooth", block: "center" }); tg.focus({ preventScroll: true }); }
+    return;
+  }
+  if (el.dataset.copy) {
+    const t = ALL.find(x => x.id === el.dataset.copy);
+    const flash = txt => { el.textContent = txt; setTimeout(() => (el.textContent = "Copy"), 1600); };
+    const selectIt = () => { const r = document.createRange(); r.selectNodeContents($("code-" + t.id)); const s = getSelection(); s.removeAllRanges(); s.addRange(r); flash("Selected"); };
+    try { navigator.clipboard.writeText(t.code).then(() => flash("Copied"), selectIt); } catch (err) { selectIt(); }
+    return;
+  }
+  if (el.id === "reset") {
+    if (el.dataset.armed === "true") {
+      done.clear(); save(); state.open.clear(); openDefault();
+      el.dataset.armed = "false"; el.textContent = "Reset progress"; renderAll();
+    } else {
+      el.dataset.armed = "true"; el.textContent = "Click again to clear all ticks";
+      setTimeout(() => { el.dataset.armed = "false"; el.textContent = "Reset progress"; }, 4000);
+    }
+  }
+});
+
+document.addEventListener("change", e => {
+  const id = e.target.dataset && e.target.dataset.done;
+  if (!id) return;
+  e.target.checked ? done.add(id) : done.delete(id);
+  save(); renderAll();
+});
+
+$("q").addEventListener("input", e => { state.q = e.target.value; renderList(); });
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (byId[h] && h !== state.area) setArea(h, false); });
+
+$("exam").innerHTML = `<div class="exam-row" aria-hidden="true"><span></span><div class="axis"><span>0%</span><span>25%</span><span>50% of questions</span></div></div>` +
+  EXAM.map(x => {
+    const s = 50, left = x.lo / s * 100, w = (x.hi - x.lo) / s * 100;
+    return `<div class="exam-row">
+      <div><div class="d">${esc(x.d)}</div><div class="covers">${esc(x.covers)}</div></div>
+      <div class="range" role="img" aria-label="${x.lo} to ${x.hi} percent of exam questions">
+        <div class="track"></div><div class="tick" style="left:50%"></div>
+        <div class="bar" style="left:${left}%;width:${w}%" title="${esc(x.d)}: ${x.lo}–${x.hi}% of questions"></div>
+        <span class="val" style="left:${left + w}%">${x.lo}–${x.hi}%</span>
+      </div>
+    </div>`;
+  }).join("");
+
+openDefault();
+renderAll();
+</script>
